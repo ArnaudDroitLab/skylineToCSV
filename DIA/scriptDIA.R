@@ -15,7 +15,7 @@ setwd("C:/MyFolder/")
 dir.create(file.path(".", "InputML"))
 
 
-## Import files ----
+## Import files from ExportSkyline folder----
 all_files <- list.files(path = "./ExportSkyline/", pattern = ".csv", full.names = T)
 
 dat = list()
@@ -25,8 +25,8 @@ dat_Qval = list()
 dat_ppm = list()
 
 
+# parse content
 for (i in 1:length(all_files)) {
-  
   # Input file  
   dat[[i]] <- read.csv(all_files[[i]], stringsAsFactors = F, header = T, dec = ".", sep = ";")  %>%
     mutate_all(funs(str_replace(., ",", "."))) %>%  
@@ -40,8 +40,6 @@ for (i in 1:length(all_files)) {
                   !str_detect(Peptide.Sequence, "C"), 
                   nchar(Peptide.Sequence) >= 8) %>%
     mutate(Feature = paste(Peptide.Sequence, Precursor.Charge, Precursor.Mz, sep = "_"))
-  
-  
   
   # Peptides info
   dat_info[[i]] <- dat[[i]] %>%
@@ -67,9 +65,6 @@ for (i in 1:length(all_files)) {
     dplyr::select(contains(".Average.Mass.Error.PPM")) %>%
     rename_all(. %>%  gsub(".Average.Mass.Error.PPM", "", .) ) 
   dat_ppm[[i]][is.na(dat_ppm[[i]])] <- 100
-  
-
-  
 }
 
 ## For ML ---- 
@@ -84,12 +79,10 @@ for (i in 1:length(all_files)) {
   dat_ML_disc[[i]] <- cbind(dat_info[[i]], dat_ML_disc[[i]]) 
 }
 
-
 df_disc <- dat_ML_disc[[1]]
 for (i in 2:length(all_files)) {
   df_disc <- merge(df_disc, dat_ML_disc[[i]], by = "Feature", all = TRUE)    
 }
-
 
 # Export
 Feature <- df_disc$Feature
@@ -105,4 +98,4 @@ x <- df_disc %>%
 colnames(x)[3:ncol(x)] <- Feature
 
 
-write.table(x, "InputML/DIA_InputML_discrete.txt", sep = "\t")
+write.table(x, "InputML/DIA_InputML_discrete.txt", sep = "\t", quote=FALSE, row.names = FALSE)
