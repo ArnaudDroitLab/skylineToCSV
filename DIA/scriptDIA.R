@@ -9,10 +9,6 @@ library(data.table)
 # set your working directory where the ExportSkyline have been created (ex: setwd("C:/MyFolder/DIA") )
 setwd("C:/MyFolder/DIA/")
 
-## create the output folder of processed skyline exports
-dir.create(file.path(".", "InputML"))
-
-
 ## import files from ExportSkyline folder----
 all_files <- list.files(path = "./ExportSkyline/", pattern = ".csv", full.names = T)
 
@@ -93,4 +89,4 @@ x <- df_disc %>%
          class = gsub("_.*", "", Sample)) %>%
   dplyr::select(Sample, class, 3:ncol(.)-2)
 colnames(x)[3:ncol(x)] <- Feature
-write.table(x, "InputML/DIA_InputML_discrete.csv", sep = "\t", quote=FALSE, row.names = FALSE)
+write.table(x, "DIA_InputML_discrete.csv", sep = "\t", quote=FALSE, row.names = FALSE)
