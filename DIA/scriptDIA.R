@@ -1,21 +1,19 @@
-
-
-# Library 
+# Libraries
 library(dplyr)
 library(tidyverse)
 library(tidyr)
 library(data.table)
 
-#### prerequisite     
+## prerequisite     
 # Store all your Skyline exports in a directory called "ExportSkyline"
-# set your working directory where the ExportSkyline have been created (ex: setwd("C:/MyFolder/") )
-setwd("C:/MyFolder/")
+# set your working directory where the ExportSkyline have been created (ex: setwd("C:/MyFolder/DIA") )
+setwd("C:/MyFolder/DIA/")
 
-#### create the output folder of processed skyline exports
+## create the output folder of processed skyline exports
 dir.create(file.path(".", "InputML"))
 
 
-## Import files from ExportSkyline folder----
+## import files from ExportSkyline folder----
 all_files <- list.files(path = "./ExportSkyline/", pattern = ".csv", full.names = T)
 
 dat = list()
@@ -25,9 +23,9 @@ dat_Qval = list()
 dat_ppm = list()
 
 
-# parse content
+## parse content
 for (i in 1:length(all_files)) {
-  # Input file  
+  ### Input file  
   dat[[i]] <- read.csv(all_files[[i]], stringsAsFactors = F, header = T, dec = ".", sep = ";")  %>%
     mutate_all(funs(str_replace(., ",", "."))) %>%  
     mutate_all(funs(str_replace(., "\\#N/A", "NA"))) %>%
@@ -41,25 +39,25 @@ for (i in 1:length(all_files)) {
                   nchar(Peptide.Sequence) >= 8) %>%
     mutate(Feature = paste(Peptide.Sequence, Precursor.Charge, Precursor.Mz, sep = "_"))
   
-  # Peptides info
+  ### Peptides info
   dat_info[[i]] <- dat[[i]] %>%
     dplyr::filter(Protein.Name != "Biognosys standards") %>%
     dplyr::select(Feature)
   
-  # Dot Product file
+  ### Dot Product file
   dat_DotP[[i]] <- dat[[i]] %>%
     dplyr::filter(Protein.Name != "Biognosys standards") %>%
     dplyr::select(contains(".Library.Dot.Product")) %>%
     rename_all(. %>%  gsub(".Library.Dot.Product", "", .) ) 
   
-  # Detection QValue file
+  ### Detection QValue file
   dat_Qval[[i]] <- dat[[i]] %>%
     dplyr::filter(Protein.Name != "Biognosys standards") %>%
     dplyr::select(contains(".Detection.Q.Value")) %>%
     rename_all(. %>%  gsub(".Detection.Q.Value", "", .) )
   
   
-  # Mass error ppm file
+  ### Mass error ppm file
   dat_ppm[[i]] <- dat[[i]] %>%
     dplyr::filter(Protein.Name != "Biognosys standards") %>%
     dplyr::select(contains(".Average.Mass.Error.PPM")) %>%
@@ -84,10 +82,9 @@ for (i in 2:length(all_files)) {
   df_disc <- merge(df_disc, dat_ML_disc[[i]], by = "Feature", all = TRUE)    
 }
 
-# Export
+## Export
 Feature <- df_disc$Feature
 Samples <- colnames(df_disc)[2:ncol(df_disc)]
-
 x <- df_disc %>% 
   dplyr::select(-Feature) %>%
   transpose %>%
@@ -96,6 +93,4 @@ x <- df_disc %>%
          class = gsub("_.*", "", Sample)) %>%
   dplyr::select(Sample, class, 3:ncol(.)-2)
 colnames(x)[3:ncol(x)] <- Feature
-
-
-write.table(x, "InputML/DIA_InputML_discrete.txt", sep = "\t", quote=FALSE, row.names = FALSE)
+write.table(x, "InputML/DIA_InputML_discrete.csv", sep = "\t", quote=FALSE, row.names = FALSE)
